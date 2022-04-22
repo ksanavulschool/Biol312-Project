@@ -1,0 +1,78 @@
+---
+title: "Wages and Education of Young Males"
+author: "Richard Yoder, Johnny Sandy, Kyle Sanavullah"
+date: "4/21/2022"
+output: pdf_document
+---
+```{r, message=FALSE}
+setwd("C:/Users/Owner/Documents/R/BIOL 312 Biostatistics for Bioinformatics/Final Project")
+
+cat("\014") # Clears Console
+rm(list=ls()) # Clears Environment
+dev.off() # Clears Plots
+graphics.off() # Clears Plots if first one didn't work.
+```
+
+#Libraries
+```{r, message=FALSE}
+library(tidyverse)
+library(dplyr)
+library(modelr)
+```
+
+#Data
+```{r, message=FALSE}
+rm(list=ls()) # Clears Environment
+Males <- read_csv("Males.csv")
+```
+
+#Cleaning
+##Data headings
+```{r}
+Males <- Males %>% 
+  rename(Person_ID = "nr",
+         experience = "exper",
+         ethnicity = "ethn",
+         married = "maried",
+         union_membership = "union")
+```
+
+#Setting Data to tibble
+```{r}
+#Males<- tidy(Males)
+```
+
+#Exploratory Data Analysis
+Is there a relationship with Marriage and Wage?
+```{r}
+Males %>% 
+  ggplot(aes(x = married,
+             y = wage))+
+  geom_boxplot()
+```
+Medians and range do appear significantly different.
+
+Let's make data synchronic:
+```{r}
+temp <- Males %>%
+  replace_na() %>%
+  filter(year == "1980")
+
+mean(temp$wage)
+
+Males %>% 
+  replace_na() %>% 
+  filter(year == "1980") %>% 
+  select(wage) %>% 
+  summary()
+```
+
+```{r}
+Males %>% 
+  group_by(year) %>% 
+  summarize(Mean = mean(wage)) %>% 
+  ggplot(aes(x = year,
+             y = Mean))+
+  geom_line()
+```
+
