@@ -87,6 +87,13 @@ Males %>%
 3) Equal variances - Variances do not appear to be equal.
 4) Normality - From the qq plot, it appears that year 1980 is non normal.
 
+###Hypothesis
+
+H0: The wage difference between years 1980 and 1987 is 0
+H1: The wage difference between years 1980 and 1987 is not 0
+
+Alpha = 0.05
+
 ```{r}
 # extrapolate the data from each year
 males1980 <- Males %>%
@@ -112,3 +119,5 @@ var(males1987$wage)
 wilcox.test(males1980$wage, males1987$wage, paired = TRUE)
 ```
 The p value was 2.2e-16 which is very small compared to alpha = 0.05. Therefore we reject the null hypothesis. The wage difference from the beginning (1980) and the end (1987) is significant.
+
+##Question2: 
