@@ -78,46 +78,113 @@ Males %>%
 
 #Questions to explore about dataset
 
-## How does each males' wage change from beginning of study (1980) and end of study (1987)
+##Question1: If a male is married, is his wage higher than those that are not married?
+
+
+For sake of independence of the tests, the year 1987 will be used.
 
 ###Check assumption:
 
-1) Random sampling - yes assummed to be random
-2) Independent sampling - no, that is why we are doing paired t test
-3) Equal variances - Variances do not appear to be equal.
-4) Normality - From the qq plot, it appears that year 1980 is non normal.
-
-###Hypothesis
-
-H0: The wage difference between years 1980 and 1987 is 0
-H1: The wage difference between years 1980 and 1987 is not 0
-
-Alpha = 0.05
-
 ```{r}
-# extrapolate the data from each year
-males1980 <- Males %>%
-  filter(year == 1980)
-
 males1987 <- Males %>%
   filter(year == 1987)
 
-# plot qq plots
-males1980 %>%
-  ggplot(aes(sample = wage)) +
-  geom_qq() +
-  geom_qq_line()
+males1987 %>%
+  ggplot(aes(wage, color = married, fill = married)) + 
+  geom_density(alpha = 0.05)
+
+males1987 %>%
+  group_by(married) %>%
+  summarise(variance = var(wage))
 
 males1987 %>%
   ggplot(aes(sample = wage)) +
   geom_qq() +
-  geom_qq_line()
-
-var(males1980$wage)
-var(males1987$wage)
-
-wilcox.test(males1980$wage, males1987$wage, paired = TRUE)
+  geom_qq_line() + 
+  facet_wrap(~married)
 ```
-The p value was 2.2e-16 which is very small compared to alpha = 0.05. Therefore we reject the null hypothesis. The wage difference from the beginning (1980) and the end (1987) is significant.
 
-##Question2: 
+1) Random sampling - yes assummed to be random
+2) Independent - Yes, from years 1987
+3) Equal variances - Variances do not appear to be equal.
+4) Normality - qq plots show that the data is relatively equal
+
+Test to be used: t test with unequal variance
+
+Null Hypothesis: Mean of married men equal mean of unmarried men
+Alternative Hypothesis: Mean of married men do not equal mean of unmarried men
+
+alpha = 0.05
+```{r}
+t.test(wage ~ married, data = males1987, var.equal = TRUE)
+```
+The p value waS 0.001033 which is less than alpha therefore this test was significant. Therefore if a man is married, then their wages are higher than those that are not married.
+
+##Question 2: Does different residence equate to higher wages?
+
+Null hypothesis: There is no difference in the means between the residences
+Alternative hypothesis: There is at least one of the means that differ between the residences
+
+alpha 0.05
+
+ANOVA assumptions
+Random Sampling - met
+Residuals are normally distributed - met with qq plot
+the variance of the groups have to be equivalent. - The variances are equivalent
+
+Use Welch's one way anova test.
+```{r}
+noNAResidence <- males1987 %>%
+  drop_na(residence)
+
+residenceModel <- lm(wage ~ residence, data = noNAResidence)
+plot(residenceModel)
+
+anova(residenceModel)
+```
+
+Conclusion: The p value was 0.002079 which is less than alpha = 0.05. Therefore we can reject the null hypothesis. At least one of the residence's mean differes.
+
+Lets figure out which one is different.
+```{r}
+TukeyHSD(aov(residenceModel))
+plot(TukeyHSD(aov(residenceModel)))
+```
+
+northern central is higher than north east
+south is higher than north east.
+
+##Question 3: Is there a linear relationship between years of experience and wage
+## Creating a linear model based on if years experienced to wage
+
+```{r}
+wageModel <- lm(wage ~ experience, data = males1987)
+```
+
+Assumptions of linear regression
+
+random sampling - met
+residuals are independent - true
+residuals are normally distributed - qq plot shows that the data relatively normal.
+residuals show constant variance - Variances are not equal because the fitted vs residual graph has a funnel. 
+x and y have a linear relationship - True, there is a linear relationship.
+
+```{r}
+# checking the assumptions
+plot(wageModel)
+
+# add residuals to the data set
+males1987 <- males1987 %>%
+  add_residuals(wageModel, var = "resid_mod1") %>% 
+  add_predictions(wageModel, var = "pred_mod1")
+
+males1987 %>%
+  ggplot(aes(resid_mod1, wage)) +
+  geom_point()
+```
+
+
+```{r}
+summary(wageModel)
+```
+TODO: Need help finishing this, as the variances are not constant.
